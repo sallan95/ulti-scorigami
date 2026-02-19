@@ -3,9 +3,7 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import fs from 'fs';
 import axios from 'axios';
-import { loadData } from './utils.js';
 
 // Get the directory name
 const __filename = fileURLToPath(import.meta.url);
@@ -45,25 +43,6 @@ app.get('/scorigami', (req, res) => {
     active: 'scorigami',
     content: 'scorigami'
   });
-});
-
-// API endpoints
-app.get('/api/team-stats', (req, res) => {
-  try {
-    const data = loadData('team_stats.json');
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get('/api/game-data', (req, res) => {
-  try {
-    const data = loadData('games_data_raw.json');
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
 });
 
 // Scorigami API - fetches live data from UFA Stats API
