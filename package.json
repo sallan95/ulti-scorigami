@@ -1,0 +1,35 @@
+{
+  "name": "ulti-scorigami",
+  "version": "1.0.0",
+  "description": "Ultimate Frisbee Scorigami and Team Statistics Visualization",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "fetch-data": "node src/fetchTeamStats.js",
+    "update-stats": "node src/updateTeamStats.js",
+    "visualize-scorigami": "node src/visualizeScorigami.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ultimate",
+    "frisbee",
+    "scorigami",
+    "statistics",
+    "visualization"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "chart.js": "^3.9.1",
+    "chartjs-node-canvas": "^4.1.6",
+    "chartjs-plugin-annotation": "^2.2.1",
+    "d3": "^7.8.5",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "fs-extra": "^11.1.1",
+    "lodash": "^4.17.21",
+    "multer": "^1.4.5-lts.1"
+  },
+  "type": "module"
+}

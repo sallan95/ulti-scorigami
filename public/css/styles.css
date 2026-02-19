@@ -1,0 +1,92 @@
+/* Custom styles for Ultimate Frisbee Scorigami */
+
+body {
+  padding-bottom: 70px; /* For the fixed footer */
+  background-color: #f8f9fa;
+}
+
+.navbar {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+  font-weight: bold;
+}
+
+.card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: none;
+  margin-bottom: 20px;
+}
+
+.card-title {
+  color: #343a40;
+  font-weight: bold;
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Chart container styles */
+canvas {
+  max-width: 100%;
+  margin: 0 auto;
+  display: block;
+}
+
+/* Table styles */
+.table {
+  margin-bottom: 0;
+}
+
+.table th {
+  background-color: #f8f9fa;
+}
+
+/* List group styles */
+.list-group-item {
+  border-left: none;
+  border-right: none;
+}
+
+.list-group-item:first-child {
+  border-top: none;
+}
+
+/* Scorigami styles */
+.legend-box {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+}
+
+#scorigamiContainer {
+  overflow-x: auto;
+}
+
+#scorigamiCanvas {
+  display: block;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 1rem;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.3rem;
+  }
+}

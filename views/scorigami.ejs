@@ -1,0 +1,357 @@
+<div class="row mb-3">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <p class="card-text mb-2">
+          A <strong>scorigami</strong> is a final score that has never happened before in league history.
+          This chart shows all unique final scores in UFA history. Green cells indicate scores that have occurred.
+        </p>
+        <div class="row align-items-center">
+          <div class="col-auto">
+            <label for="yearFilter" class="form-label mb-0">Filter by Year:</label>
+          </div>
+          <div class="col-auto">
+            <select id="yearFilter" class="form-select form-select-sm">
+              <option value="all">All Years</option>
+            </select>
+          </div>
+          <div class="col-auto">
+            <span id="loadingIndicator" class="text-muted">Loading data...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-9">
+    <div class="card">
+      <div class="card-body">
+        <div id="scorigamiContainer" style="position: relative;">
+          <canvas id="scorigamiCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Statistics</h5>
+        <ul class="list-group list-group-flush" id="statsContainer">
+          <li class="list-group-item">Loading...</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-body">
+        <h5 class="card-title">Legend</h5>
+        <div class="d-flex align-items-center mb-2">
+          <div class="legend-box" style="background-color: #22c55e;"></div>
+          <span class="ms-2">Score has occurred</span>
+        </div>
+        <div class="d-flex align-items-center">
+          <div class="legend-box" style="background-color: #ffffff; border: 1px solid #ccc;"></div>
+          <span class="ms-2">Score has not occurred</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for game details -->
+<div class="modal fade" id="gameModal" tabindex="-1" aria-labelledby="gameModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="gameModalLabel">Games with Score</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="gameModalBody">
+        <!-- Game details will be inserted here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+  const canvas = document.getElementById('scorigamiCanvas');
+  const ctx = canvas.getContext('2d');
+  const container = document.getElementById('scorigamiContainer');
+  const yearFilter = document.getElementById('yearFilter');
+  const loadingIndicator = document.getElementById('loadingIndicator');
+  const statsContainer = document.getElementById('statsContainer');
+  const gameModal = new bootstrap.Modal(document.getElementById('gameModal'));
+  const gameModalLabel = document.getElementById('gameModalLabel');
+  const gameModalBody = document.getElementById('gameModalBody');
+
+  let scorigamiData = null;
+  let filteredCombinations = null;
+  let cellSize = 20;
+  let padding = { top: 40, right: 20, bottom: 60, left: 60 };
+
+  // Fetch data from API
+  async function fetchData() {
+    try {
+      const response = await fetch('/api/scorigami-data');
+      scorigamiData = await response.json();
+
+      // Populate year filter
+      scorigamiData.years.forEach(year => {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearFilter.appendChild(option);
+      });
+
+      loadingIndicator.textContent = '';
+      filterAndRender();
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      loadingIndicator.textContent = 'Error loading data';
+      loadingIndicator.classList.add('text-danger');
+    }
+  }
+
+  // Filter data by year and render
+  function filterAndRender() {
+    if (!scorigamiData) return;
+
+    const selectedYear = yearFilter.value;
+
+    if (selectedYear === 'all') {
+      filteredCombinations = scorigamiData.combinations;
+    } else {
+      // Filter games by year and rebuild combinations
+      filteredCombinations = {};
+      const year = parseInt(selectedYear);
+
+      Object.entries(scorigamiData.combinations).forEach(([key, combo]) => {
+        const filteredGames = combo.games.filter(g => g.year === year);
+        if (filteredGames.length > 0) {
+          filteredCombinations[key] = {
+            ...combo,
+            count: filteredGames.length,
+            games: filteredGames
+          };
+        }
+      });
+    }
+
+    updateStats();
+    render();
+  }
+
+  // Update statistics display
+  function updateStats() {
+    const uniqueScores = Object.keys(filteredCombinations).length;
+    let totalGames = 0;
+    Object.values(filteredCombinations).forEach(c => totalGames += c.count);
+
+    const maxScore = scorigamiData.maxScore;
+    const possibleCombinations = Math.floor(((maxScore + 1) * (maxScore + 2)) / 2);
+    const coverage = possibleCombinations > 0
+      ? ((uniqueScores / possibleCombinations) * 100).toFixed(1)
+      : 0;
+
+    statsContainer.innerHTML = `
+      <li class="list-group-item d-flex justify-content-between">
+        <span>Total Games</span>
+        <strong>${totalGames.toLocaleString()}</strong>
+      </li>
+      <li class="list-group-item d-flex justify-content-between">
+        <span>Unique Scores</span>
+        <strong>${uniqueScores}</strong>
+      </li>
+      <li class="list-group-item d-flex justify-content-between">
+        <span>Possible Scores</span>
+        <strong>${possibleCombinations}</strong>
+      </li>
+      <li class="list-group-item d-flex justify-content-between">
+        <span>Coverage</span>
+        <strong>${coverage}%</strong>
+      </li>
+    `;
+  }
+
+  // Main render function
+  function render() {
+    if (!scorigamiData) return;
+
+    const maxScore = scorigamiData.maxScore;
+
+    // Calculate canvas size
+    const containerWidth = container.clientWidth;
+    cellSize = Math.max(12, Math.min(25, Math.floor((containerWidth - padding.left - padding.right) / (maxScore + 1))));
+
+    const width = padding.left + (maxScore + 1) * cellSize + padding.right;
+    const height = padding.top + (maxScore + 1) * cellSize + padding.bottom;
+
+    canvas.width = width;
+    canvas.height = height;
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+
+    // Clear canvas
+    ctx.fillStyle = '#f8f9fa';
+    ctx.fillRect(0, 0, width, height);
+
+    // Draw grid cells (triangular - only where winning >= losing)
+    for (let winning = 0; winning <= maxScore; winning++) {
+      for (let losing = 0; losing <= winning; losing++) {
+        const x = padding.left + losing * cellSize;
+        const y = padding.top + (maxScore - winning) * cellSize;
+
+        const key = `${winning}-${losing}`;
+        const hasOccurred = filteredCombinations[key];
+
+        // Fill cell
+        ctx.fillStyle = hasOccurred ? '#22c55e' : '#ffffff';
+        ctx.fillRect(x, y, cellSize, cellSize);
+
+        // Draw border
+        ctx.strokeStyle = '#d1d5db';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(x, y, cellSize, cellSize);
+      }
+    }
+
+    // Draw axes
+    ctx.fillStyle = '#1f2937';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+
+    // X-axis labels (Losing Score)
+    for (let i = 0; i <= maxScore; i += 5) {
+      const x = padding.left + i * cellSize + cellSize / 2;
+      ctx.fillText(i.toString(), x, height - padding.bottom + 20);
+    }
+
+    // Y-axis labels (Winning Score)
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= maxScore; i += 5) {
+      const y = padding.top + (maxScore - i) * cellSize + cellSize / 2 + 4;
+      ctx.fillText(i.toString(), padding.left - 8, y);
+    }
+
+    // Axis titles
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Losing Score', padding.left + ((maxScore + 1) * cellSize) / 2, height - 10);
+
+    ctx.save();
+    ctx.translate(15, padding.top + ((maxScore + 1) * cellSize) / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Winning Score', 0, 0);
+    ctx.restore();
+
+    // Title
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText('UFA Scorigami', width / 2, 20);
+  }
+
+  // Handle canvas clicks
+  canvas.addEventListener('click', function(event) {
+    if (!scorigamiData || !filteredCombinations) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const maxScore = scorigamiData.maxScore;
+
+    // Calculate which cell was clicked
+    const losing = Math.floor((x - padding.left) / cellSize);
+    const winning = maxScore - Math.floor((y - padding.top) / cellSize);
+
+    // Check if valid cell (triangular region)
+    if (losing < 0 || losing > maxScore || winning < 0 || winning > maxScore || winning < losing) {
+      return;
+    }
+
+    const key = `${winning}-${losing}`;
+    const combo = filteredCombinations[key];
+
+    if (combo && combo.games.length > 0) {
+      showGameDetails(winning, losing, combo.games);
+    }
+  });
+
+  // Update cursor on hover
+  canvas.addEventListener('mousemove', function(event) {
+    if (!scorigamiData || !filteredCombinations) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const maxScore = scorigamiData.maxScore;
+    const losing = Math.floor((x - padding.left) / cellSize);
+    const winning = maxScore - Math.floor((y - padding.top) / cellSize);
+
+    if (losing >= 0 && losing <= maxScore && winning >= 0 && winning <= maxScore && winning >= losing) {
+      const key = `${winning}-${losing}`;
+      canvas.style.cursor = filteredCombinations[key] ? 'pointer' : 'default';
+    } else {
+      canvas.style.cursor = 'default';
+    }
+  });
+
+  // Show game details in modal
+  function showGameDetails(winning, losing, games) {
+    gameModalLabel.textContent = `Games with Final Score: ${winning} - ${losing}`;
+
+    // Sort games by date (newest first)
+    const sortedGames = [...games].sort((a, b) => {
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      return new Date(b.date) - new Date(a.date);
+    });
+
+    const tableRows = sortedGames.map(game => {
+      const winner = game.homeScore > game.awayScore ? game.homeTeam : game.awayTeam;
+      const loser = game.homeScore > game.awayScore ? game.awayTeam : game.homeTeam;
+      return `
+        <tr>
+          <td>${game.date || 'Unknown'}</td>
+          <td><strong>${winner}</strong> def. ${loser}</td>
+          <td>${game.homeTeam} ${game.homeScore} - ${game.awayScore} ${game.awayTeam}</td>
+        </tr>
+      `;
+    }).join('');
+
+    gameModalBody.innerHTML = `
+      <p class="text-muted mb-3">This score has occurred <strong>${games.length}</strong> time${games.length !== 1 ? 's' : ''}.</p>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Result</th>
+            <th>Score (Home - Away)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+    `;
+
+    gameModal.show();
+  }
+
+  // Handle year filter change
+  yearFilter.addEventListener('change', filterAndRender);
+
+  // Handle window resize
+  window.addEventListener('resize', () => {
+    if (scorigamiData) render();
+  });
+
+  // Initial fetch
+  fetchData();
+});
+</script>
