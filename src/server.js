@@ -36,8 +36,8 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/scorigami', (req, res) => {
-  console.log('Rendering scorigami page');
+app.get('/ufa-scorigami', (req, res) => {
+  console.log('Rendering UFA scorigami page');
   res.render('layout', { 
     title: 'UFA Scorigami Visualization',
     active: 'scorigami',
