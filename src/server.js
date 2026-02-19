@@ -45,6 +45,11 @@ app.get('/scorigami', (req, res) => {
   });
 });
 
+// Health check endpoint for hosting platforms
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 // Scorigami API - fetches live data from UFA Stats API
 app.get('/api/scorigami-data', async (req, res) => {
   try {
