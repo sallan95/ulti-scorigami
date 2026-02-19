@@ -39,7 +39,7 @@ app.get('/', (req, res) => {
 app.get('/scorigami', (req, res) => {
   console.log('Rendering scorigami page');
   res.render('layout', { 
-    title: 'Scorigami Visualization',
+    title: 'UFA Scorigami Visualization',
     active: 'scorigami',
     content: 'scorigami'
   });
