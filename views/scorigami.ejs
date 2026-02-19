@@ -315,11 +315,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     const tableRows = sortedGames.map(game => {
       const winner = game.homeScore > game.awayScore ? game.homeTeam : game.awayTeam;
       const loser = game.homeScore > game.awayScore ? game.awayTeam : game.homeTeam;
+      const gameUrl = `https://www.watchufa.com/league/game/${game.gameID}`;
       return `
         <tr>
           <td>${game.date || 'Unknown'}</td>
           <td><strong>${winner}</strong> def. ${loser}</td>
           <td>${game.homeTeam} ${game.homeScore} - ${game.awayScore} ${game.awayTeam}</td>
+          <td><a href="${gameUrl}" target="_blank" rel="noopener">Watch</a></td>
         </tr>
       `;
     }).join('');
@@ -332,6 +334,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             <th>Date</th>
             <th>Result</th>
             <th>Score (Home - Away)</th>
+            <th>Link</th>
           </tr>
         </thead>
         <tbody>
